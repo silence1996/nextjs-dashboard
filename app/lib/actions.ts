@@ -8,24 +8,47 @@ import { z } from 'zod';
 /** 表单验证器 */
 const FormSchema = z.object({
   id: z.string(),
-  customerId: z.string(),
-  amount: z.coerce.number(), // 检测并强制转换为number
-  status: z.enum(['pending', 'paid']),
+  customerId: z.string({
+    invalid_type_error: '请选择一个用户',
+  }),
+  amount: z.coerce.number().gt(0, { message: '请输入大于0的金额' }), // 检测并强制转换为number
+  status: z.enum(['pending', 'paid'], {
+    invalid_type_error: '请选择发票的状态',
+  }),
   date: z.string(),
 });
 
 /** 创建发票验证器 */
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 
+export type State = {
+  errors?: {
+    customerId?: string[];
+    amount?: string[];
+    status?: string[];
+  };
+  message?: string | null;
+};
+
 /**
  * 新建发票
  */
-export async function createInvoice(formData: FormData) {
-  const { customerId, amount, status } = CreateInvoice.parse({
+export async function createInvoice(prevState: State, formData: FormData) {
+  const validatedFields = CreateInvoice.safeParse({
     customerId: formData.get('customerId'),
     amount: formData.get('amount'),
     status: formData.get('status'),
   });
+
+  if (!validatedFields.success) {
+    console.log(validatedFields);
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: '缺少字段，创建发票失败',
+    };
+  }
+
+  const { customerId, amount, status } = validatedFields.data;
 
   const amountInCents = amount * 100;
   const date = new Date().toISOString().split('T')[0];
