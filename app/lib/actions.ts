@@ -1,6 +1,8 @@
 'use server';
 
+import { signIn } from '@/auth';
 import { sql } from '@vercel/postgres';
+import { AuthError } from 'next-auth';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
@@ -111,4 +113,25 @@ export async function deleteInvoice(id: string) {
   }
 
   revalidatePath('/dashboard/invoices');
+}
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      console.log(error);
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return '账号或密码错误';
+        default:
+          return '登录好像出了问题';
+      }
+    }
+
+    throw error;
+  }
 }
