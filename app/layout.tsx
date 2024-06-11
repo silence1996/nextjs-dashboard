@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     images: '/logo.png',
   },
-  metadataBase: new URL('https://next-learn-dashboard.vercel.sh'), // 用处未知
+  metadataBase: new URL('https://www.ruohuabz.cn'), // 用处未知
 };
 
 export default function RootLayout({
